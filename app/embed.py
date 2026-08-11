@@ -1,7 +1,7 @@
 import json
 from fastembed import TextEmbedding, SparseTextEmbedding
 
-# Load our processed legal articles
+# Load structured articles
 with open(
     "processed/constitution_articles.json",
     "r",
@@ -11,53 +11,75 @@ with open(
 
 print(f"Loaded {len(articles)} articles")
 
-
-# Dense embedding model
-print("Loading dense model...")
-
+# Load models
+print("\nLoading dense embedding model...")
 dense_model = TextEmbedding(
     model_name="sentence-transformers/all-MiniLM-L6-v2"
 )
 
-
-# Sparse embedding model
-print("Loading sparse model...")
-
+print("Loading sparse embedding model...")
 sparse_model = SparseTextEmbedding(
     model_name="prithivida/Splade_PP_en_v1"
 )
 
-print("Models loaded!")
+print("✅ Models loaded!")
 
+# Process in small batches
+BATCH_SIZE = 16
 
-# Generate embeddings
-texts = [article["text"] for article in articles]
+all_embeddings = []
 
-print("Generating dense embeddings...")
+for start in range(0, len(articles), BATCH_SIZE):
 
-dense_embeddings = list(
-    dense_model.embed(texts)
-)
+    batch = articles[start:start + BATCH_SIZE]
+    texts = [article["text"] for article in batch]
 
-print("Generating sparse embeddings...")
+    print(
+        f"\nEmbedding articles "
+        f"{start + 1}-{min(start + BATCH_SIZE, len(articles))}"
+    )
 
-sparse_embeddings = list(
-    sparse_model.embed(texts)
-)
+    # Dense embeddings
+    dense_vectors = list(
+        dense_model.embed(texts)
+    )
 
-print("✅ Embeddings generated!")
+    # Sparse embeddings
+    sparse_vectors = list(
+        sparse_model.embed(texts)
+    )
 
+    for article, dense, sparse in zip(
+        batch,
+        dense_vectors,
+        sparse_vectors
+    ):
+        all_embeddings.append({
+            "source": article["source"],
+            "article": article["article"],
+            "text": article["text"],
+            "dense": dense.tolist(),
+            "sparse_indices": sparse.indices.tolist(),
+            "sparse_values": sparse.values.tolist()
+        })
 
-# Check the first article
-print("\nExample:")
-print("Article:", articles[0]["article"])
+    print(
+        f"Progress: "
+        f"{min(start + BATCH_SIZE, len(articles))}/{len(articles)}"
+    )
 
-print(
-    "Dense vector dimensions:",
-    len(dense_embeddings[0])
-)
+print("\n✅ All embeddings generated!")
 
-print(
-    "Sparse vector dimensions:",
-    len(sparse_embeddings[0].indices)
-)
+# Save embeddings temporarily
+with open(
+    "processed/constitution_embeddings.json",
+    "w",
+    encoding="utf-8"
+) as f:
+    json.dump(
+        all_embeddings,
+        f,
+        ensure_ascii=False
+    )
+
+print("Saved to processed/constitution_embeddings.json")
