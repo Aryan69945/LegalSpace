@@ -2,13 +2,10 @@ import os
 
 from dotenv import load_dotenv
 from google import genai
+from app.config import RELEVANCE_THRESHOLD
 
-from app.hybrid_search import hybrid_search
+from app.services.hybrid_search import hybrid_search
 
-
-# ============================================================
-# 1. Load environment variables
-# ============================================================
 
 load_dotenv()
 
@@ -18,22 +15,12 @@ if not api_key:
     raise ValueError("GEMINI_API_KEY not found in .env")
 
 
-# ============================================================
-# 2. Gemini client
-# ============================================================
-
 client = genai.Client(
     api_key=api_key
 )
 
 
-# ============================================================
-# 3. Build context from retrieved documents
-# ============================================================
-
 def build_context(results):
-
-    RELEVANCE_THRESHOLD = -2.0
 
     context_parts = []
 

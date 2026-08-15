@@ -4,7 +4,7 @@ import json
 from dotenv import load_dotenv
 from google import genai
 
-from app.hybrid_search import hybrid_search
+from app.services.hybrid_search import hybrid_search
 
 
 load_dotenv()

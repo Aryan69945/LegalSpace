@@ -14,6 +14,10 @@ textarea {
   font: inherit;
 }
 
+.head{
+  color: #171717;
+}
+
 .app {
   max-width: 1100px;
   margin: 0 auto;

@@ -1,4 +1,6 @@
 import json
+import os
+from pathlib import Path
 
 from fastembed import TextEmbedding
 from rank_bm25 import BM25Okapi
@@ -9,10 +11,14 @@ from sentence_transformers import CrossEncoder
 COLLECTION_NAME = "indian_laws"
 
 
+# Resolve path to project root regardless of cwd
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+
+
 print("Loading legal documents...")
 
 with open(
-    "processed/constitution_articles.json",
+    _PROJECT_ROOT / "processed" / "constitution_articles.json",
     "r",
     encoding="utf-8",
 ) as f:
@@ -59,7 +65,7 @@ print("Reranker ready")
 print("Connecting to Qdrant...")
 
 qdrant = QdrantClient(
-    path="qdrant_data"
+    path=str(_PROJECT_ROOT / "qdrant_data")
 )
 
 print("Qdrant connected")

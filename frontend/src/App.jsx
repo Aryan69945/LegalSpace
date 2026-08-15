@@ -117,7 +117,7 @@ function App() {
         </button>
 
         <button
-          className={mode === "conflict" ? "active" : ""}
+          className={`head ${mode === "conflict" ? "active" : ""}`}
           onClick={() => setMode("conflict")}
         >
           Bill Conflict Analysis
@@ -130,7 +130,7 @@ function App() {
 
         <main className="panel">
 
-          <h2>Ask a constitutional question</h2>
+          <h2 className="head">Ask a constitutional question</h2>
 
           <textarea
             value={question}
