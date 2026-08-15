@@ -9,8 +9,6 @@ with open(
 ) as f:
     articles = json.load(f)
 
-print(f"Loaded {len(articles)} articles")
-
 # Load models
 print("\nLoading dense embedding model...")
 dense_model = TextEmbedding(

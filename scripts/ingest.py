@@ -3,7 +3,7 @@ import json
 import pymupdf
 
 PDF_PATH = "data/constitution_of_india.pdf"
-
+source = os.path.basename(PDF_PATH)
 
 def extract_text(pdf_path):
     doc = pymupdf.open(pdf_path)
@@ -41,11 +41,11 @@ for i, match in enumerate(matches):
 
     article_text = text[start:end].strip()
 
-    if len(article_text) < 30:
+    if len(article_text) < 30:                  # if article length is too small ignore it
         continue
 
     chunks.append({
-        "source": "constitution_of_india.pdf",
+        "source": source,
         "article": f"Article {article_number}",
         "text": article_text
     })

@@ -2,19 +2,15 @@ import json
 
 from qdrant_client import QdrantClient
 from qdrant_client.models import (
-    Distance,
-    PointStruct,
-    SparseVector,
-    SparseVectorParams,
-    VectorParams,
+    Distance,              # to decide how similar two vectors are
+    PointStruct,           # to represent one complete point/document in Qdrant
+    SparseVector,          # to store a vector using only non-zero values
+    SparseVectorParams,    # to configure sparse vectors in the collection
+    VectorParams,          # to configure dense vectors in the collection
 )
 
 
 COLLECTION_NAME = "indian_laws"
-
-
-# Load embeddings
-print("Loading embeddings...")
 
 with open(
     "processed/constitution_embeddings.json",
@@ -23,16 +19,11 @@ with open(
 ) as f:
     documents = json.load(f)
 
-print(f"Loaded {len(documents)} documents")
-
 
 # Start local Qdrant
 print("Starting Qdrant...")
-qdrant = QdrantClient(path="qdrant_data")
+qdrant = QdrantClient(path="qdrant_data")   # creates a local Qdrant database and connects to it
 
-
-# Create collection
-print("Creating collection...")
 
 qdrant.create_collection(
     collection_name=COLLECTION_NAME,
