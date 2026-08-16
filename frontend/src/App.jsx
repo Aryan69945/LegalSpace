@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState,useEffect } from "react";
 import "./App.css";
 
 function App() {
@@ -11,6 +11,7 @@ function App() {
   const [conflict, setConflict] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [cache,setCache] = useState(null)
 
   async function askQuestion() {
     if (!question.trim()) {
@@ -44,6 +45,7 @@ function App() {
 
       setAnswer(data.answer);
       setSources(data.sources || []);
+      setCache(data.cached);
 
     } catch (err) {
       setError(err.message);
@@ -137,6 +139,12 @@ function App() {
             onChange={(e) => setQuestion(e.target.value)}
             placeholder="What protects equality before the law?"
           />
+
+          <div>
+          {cache !== null && (
+            cache ? "Answer from cache memory as repeated question." : "Generated using Gemini API"
+            )}
+            </div>
 
           <button
             className="primary"

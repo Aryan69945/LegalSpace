@@ -5,6 +5,7 @@ from google import genai
 from app.config import RELEVANCE_THRESHOLD
 
 from app.services.hybrid_search import hybrid_search
+from app.services.cache import init_cache, get_cached, set_cached
 
 
 load_dotenv()
@@ -15,19 +16,23 @@ if not api_key:
     raise ValueError("GEMINI_API_KEY not found in .env")
 
 
-client = genai.Client(
-    api_key=api_key
-)
+client = genai.Client(api_key=api_key)
+
+# Ensure cache table exists on startup
+init_cache()
 
 
 def build_context(results):
 
     context_parts = []
+    filtered_sources = []
 
     for i, result in enumerate(results, 1):
 
         if result["rerank_score"] < RELEVANCE_THRESHOLD:
             continue
+
+        filtered_sources.append(result)
 
         context_parts.append(
             f"""
@@ -40,33 +45,33 @@ Text:
 """
         )
 
-    # No sufficiently relevant evidence
     if not context_parts:
-        return None
+        return None, []
 
-    return "\n".join(context_parts)
+    return "\n".join(context_parts), filtered_sources
 
 
-# ============================================================
 # 4. Generate grounded answer
-# ============================================================
 
 def answer_question(question):
 
-    # --------------------------------------------------------
-    # Retrieve relevant legal provisions
-    # --------------------------------------------------------
+    cached = get_cached(question)
 
-    results = hybrid_search(
-        question,
-        limit=5,
-    )
+    if cached:
+        print(f"[CACHE HIT] {question[:60]}")
+        return {
+            "question": question,
+            "answer":   cached["answer"],
+            "sources":  cached["sources"],
+            "cached":   True,
+        }
 
-    # --------------------------------------------------------
-    # Build evidence context
-    # --------------------------------------------------------
+    print(f"[CACHE MISS] {question[:60]}")
 
-    context = build_context(results)
+    results = hybrid_search(question, limit=5)
+
+
+    context, filtered_sources = build_context(results)
 
     # --------------------------------------------------------
     # Stop if retrieval failed
@@ -81,6 +86,7 @@ def answer_question(question):
                 "this question."
             ),
             "sources": [],
+            "cached":  False,
         }
 
     # --------------------------------------------------------
@@ -127,14 +133,23 @@ Now provide the answer.
         contents=prompt,
     )
 
+    answer = response.text
+
+    # --------------------------------------------------------
+    # Store in cache for future requests
+    # --------------------------------------------------------
+
+    set_cached(question, answer, filtered_sources)
+
     # --------------------------------------------------------
     # Return structured response
     # --------------------------------------------------------
 
     return {
         "question": question,
-        "answer": response.text,
-        "sources": results,
+        "answer":   answer,
+        "sources":  filtered_sources,
+        "cached":   False,
     }
 
 

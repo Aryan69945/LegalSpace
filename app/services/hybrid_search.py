@@ -7,11 +7,12 @@ from rank_bm25 import BM25Okapi
 from qdrant_client import QdrantClient
 from sentence_transformers import CrossEncoder
 
+from app.config import (
+    COLLECTION_NAME,
+    RRF_CONSTANT
+)
 
-COLLECTION_NAME = "indian_laws"
 
-
-# Resolve path to project root regardless of cwd
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
 
@@ -58,11 +59,7 @@ reranker = CrossEncoder(
 print("Reranker ready")
 
 
-# ============================================================
 # 5. Connect to persistent Qdrant
-# ============================================================
-
-print("Connecting to Qdrant...")
 
 qdrant = QdrantClient(
     path=str(_PROJECT_ROOT / "qdrant_data")
@@ -71,15 +68,10 @@ qdrant = QdrantClient(
 print("Qdrant connected")
 
 
-# ============================================================
 # 6. Hybrid search
-# ============================================================
+
 
 def hybrid_search(query, limit=5):
-
-    # --------------------------------------------------------
-    # A. BM25 retrieval
-    # --------------------------------------------------------
 
     query_tokens = query.lower().split()         #creates a list of every node of query.
 
@@ -109,14 +101,11 @@ def hybrid_search(query, limit=5):
     ).points
 
 
-    # --------------------------------------------------------
     # C. Reciprocal Rank Fusion (RRF)
-    # --------------------------------------------------------
 
     scores = {}
 
-    # RRF constant
-    k = 60
+    k = RRF_CONSTANT
 
 
     # Add BM25 ranking contribution
@@ -139,9 +128,7 @@ def hybrid_search(query, limit=5):
         )
 
 
-    # --------------------------------------------------------
     # D. Select candidates for reranking
-    # --------------------------------------------------------
 
     candidate_count = 20
 
@@ -152,9 +139,7 @@ def hybrid_search(query, limit=5):
     )[:candidate_count]
 
 
-    # --------------------------------------------------------
     # E. Cross-Encoder reranking
-    # --------------------------------------------------------
 
     rerank_inputs = []
 
@@ -208,10 +193,7 @@ def hybrid_search(query, limit=5):
 
     return results
 
-
-# ============================================================
 # 7. Test the search system
-# ============================================================
 
 if __name__ == "__main__":
 

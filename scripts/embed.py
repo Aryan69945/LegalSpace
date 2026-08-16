@@ -1,29 +1,27 @@
 import json
 from fastembed import TextEmbedding, SparseTextEmbedding
+from config import (
+    DENSE_EMBED_MODEL,
+    SPARSE_EMBED_MODEL,
+    EMBED_BATCH_SIZE,
+    ARTICLES_FILE,
+    EMBEDDINGS_FILE,
+)
 
-# Load structured articles
-with open(
-    "processed/constitution_articles.json",
-    "r",
-    encoding="utf-8"
-) as f:
+with open(ARTICLES_FILE, "r", encoding="utf-8") as f:
     articles = json.load(f)
 
-# Load models
 print("\nLoading dense embedding model...")
-dense_model = TextEmbedding(
-    model_name="sentence-transformers/all-MiniLM-L6-v2"
-)
+
+dense_model = TextEmbedding(model_name=DENSE_EMBED_MODEL)
 
 print("Loading sparse embedding model...")
-sparse_model = SparseTextEmbedding(
-    model_name="prithivida/Splade_PP_en_v1"
-)
+sparse_model = SparseTextEmbedding(model_name=SPARSE_EMBED_MODEL)
 
 print("✅ Models loaded!")
 
 # Process in small batches
-BATCH_SIZE = 16
+BATCH_SIZE = EMBED_BATCH_SIZE
 
 all_embeddings = []
 
@@ -69,15 +67,7 @@ for start in range(0, len(articles), BATCH_SIZE):
 print("\n✅ All embeddings generated!")
 
 # Save embeddings temporarily
-with open(
-    "processed/constitution_embeddings.json",
-    "w",
-    encoding="utf-8"
-) as f:
-    json.dump(
-        all_embeddings,
-        f,
-        ensure_ascii=False
-    )
+with open(EMBEDDINGS_FILE, "w", encoding="utf-8") as f:
+    json.dump(all_embeddings, f, ensure_ascii=False)
 
-print("Saved to processed/constitution_embeddings.json")
+print(f"Saved to {EMBEDDINGS_FILE}")

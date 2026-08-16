@@ -2,34 +2,41 @@ import json
 
 from qdrant_client import QdrantClient
 from qdrant_client.models import (
-    Distance,              # to decide how similar two vectors are
-    PointStruct,           # to represent one complete point/document in Qdrant
-    SparseVector,          # to store a vector using only non-zero values
-    SparseVectorParams,    # to configure sparse vectors in the collection
-    VectorParams,          # to configure dense vectors in the collection
+    Distance,
+    PointStruct,
+    SparseVector,
+    SparseVectorParams,
+    VectorParams,
+)
+from config import (
+    COLLECTION_NAME,
+    DENSE_VECTOR_SIZE,
+    EMBEDDINGS_FILE,
+    QDRANT_DIR,
 )
 
 
-COLLECTION_NAME = "indian_laws"
-
-with open(
-    "processed/constitution_embeddings.json",
-    "r",
-    encoding="utf-8",
-) as f:
+with open(EMBEDDINGS_FILE, "r", encoding="utf-8") as f:
     documents = json.load(f)
+
+print(f"Loaded {len(documents)} embeddings")
 
 
 # Start local Qdrant
 print("Starting Qdrant...")
-qdrant = QdrantClient(path="qdrant_data")   # creates a local Qdrant database and connects to it
+qdrant = QdrantClient(path=str(QDRANT_DIR))
 
+# Delete existing collection if it exists, then recreate fresh
+existing = [c.name for c in qdrant.get_collections().collections]
+if COLLECTION_NAME in existing:
+    print(f"Deleting existing collection '{COLLECTION_NAME}'...")
+    qdrant.delete_collection(COLLECTION_NAME)
 
 qdrant.create_collection(
     collection_name=COLLECTION_NAME,
     vectors_config={
         "text-dense": VectorParams(
-            size=384,
+            size=DENSE_VECTOR_SIZE,
             distance=Distance.COSINE,
         )
     },
